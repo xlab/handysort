@@ -37,8 +37,7 @@ func (a Strings) Less(i, j int) bool { return StringLess(a[i], a[j]) }
 
 // StringLess compares two alphanumeric strings correctly.
 func StringLess(s1, s2 string) (less bool) {
-	// uint64 = max 19 digits
-	n1, n2 := make([]rune, 0, 18), make([]rune, 0, 18)
+	n1, n2 := make([]rune, 0, 20), make([]rune, 0, 20)
 
 	for i, j := 0, 0; i < len(s1) || j < len(s2); {
 		var r1, r2 rune
@@ -69,18 +68,17 @@ func StringLess(s1, s2 string) (less bool) {
 
 		// if have rune and other non-digit rune
 		if (!d1 || !d2) && r1 > 0 && r2 > 0 {
-			// and accumulators have digits
 			if len(n1) > 0 && len(n2) > 0 {
-				// make numbers from digit group
-				in1 := digitsToNum(n1)
-				in2 := digitsToNum(n2)
-				// and compare
-				if in1 != in2 {
-					return in1 < in2
+				// compare digits in accumulators
+				less, equal := compareByDigits(n1, n2)
+				if !equal {
+					return less
 				}
+
 				// if equal, empty accumulators and continue
 				n1, n2 = n1[0:0], n2[0:0]
 			}
+
 			// detect if non-digit rune from former or latter
 			if r1 != r2 {
 				return r1 < r2
@@ -88,28 +86,47 @@ func StringLess(s1, s2 string) (less bool) {
 		}
 	}
 
-	// if reached end of both strings and accumulators
-	// have some digits
-	if len(n1) > 0 || len(n2) > 0 {
-		in1 := digitsToNum(n1)
-		in2 := digitsToNum(n2)
-		if in1 != in2 {
-			return in1 < in2
-		}
+	// reached both strings ends, compare numeric accumulators
+	less, equal := compareByDigits(n1, n2)
+
+	if !equal {
+		return less
 	}
 
 	// last hope
 	return len(s1) < len(s2)
 }
 
-// Convert a set of runes (digits 0-9) to uint64 number
-func digitsToNum(d []rune) (n uint64) {
-	if l := len(d); l > 0 {
-		n += uint64(d[l-1] - 48)
-		k := uint64(l - 1)
-		for _, r := range d[:l-1] {
-			n, k = n+uint64(r-48)*uint64(10)*k, k-1
+// Compare two numeric fields by their digits
+func compareByDigits(n1, n2 []rune) (less, equal bool) {
+	lenless := len(n1) < len(n2)
+	var inversed bool
+	if !lenless {
+		inversed = true
+		n1, n2 = n2, n1
+	}
+	offset := len(n2) - len(n1)
+
+	for i := range n2 {
+		var r1 rune
+		if offset < 1 {
+			// emulate zero-padding
+			r1 = n1[i-offset]
+		} else {
+			offset--
+		}
+
+		r2 := n2[i]
+		if r1 != r2 {
+			if inversed {
+				return r2 < r1, false
+			}
+			return r1 < r2, false
 		}
 	}
-	return
+
+	if inversed {
+		return len(n2) < len(n1), len(n1) == len(n2)
+	}
+	return lenless, len(n1) == len(n2)
 }

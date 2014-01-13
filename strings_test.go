@@ -39,6 +39,7 @@ func TestStringLess(t *testing.T) {
 		{"a10", "abcdefgh2", true},
 		{"аб2аб", "аб10аб", true},
 		{"2аб", "3аб", true},
+		{"a01b001", "a001b01", true},
 	}
 
 	for _, v := range testset {
