@@ -99,34 +99,39 @@ func StringLess(s1, s2 string) (less bool) {
 
 // Compare two numeric fields by their digits
 func compareByDigits(n1, n2 []rune) (less, equal bool) {
-	lenless := len(n1) < len(n2)
-	var inversed bool
-	if !lenless {
-		inversed = true
+	offset := len(n2) - len(n1)
+	n1n2 := offset < 0 // len(n1) > len(n2)
+	if n1n2 {
+		// if n1 longer, inverse with n2
+		offset = -offset
 		n1, n2 = n2, n1
 	}
-	offset := len(n2) - len(n1)
 
+	var j int
 	for i := range n2 {
 		var r1 rune
-		if offset < 1 {
-			// emulate zero-padding
-			r1 = n1[i-offset]
+		if offset == 0 {
+			// begin actual read
+			r1 = n1[j]
+			j++
 		} else {
+			// emulate zero-padding
+			r1 = '0'
 			offset--
 		}
 
 		r2 := n2[i]
 		if r1 != r2 {
-			if inversed {
-				return r2 < r1, false
+			if n1n2 {
+				return r2 < r1, false // actually r1 < r2
 			}
 			return r1 < r2, false
 		}
 	}
 
-	if inversed {
-		return len(n2) < len(n1), len(n1) == len(n2)
+	// use overall length then
+	if n1n2 {
+		return true, false
 	}
-	return lenless, len(n1) == len(n2)
+	return !n1n2, len(n1) == len(n2)
 }
