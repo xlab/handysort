@@ -46,5 +46,5 @@ func main() {
 ### Benchmarking
 
 ```
-go test -bench=B
+$ go test -bench=.
 ```
