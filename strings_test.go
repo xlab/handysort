@@ -67,6 +67,15 @@ func BenchmarkHandyStringSort(b *testing.B) {
 	}
 }
 
+func BenchmarkStringLess(b *testing.B) {
+	set := testSet(300)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		n := b.N % 999
+		_ = StringLess(set[n][0], set[n+1][1])
+	}
+}
+
 // Get 1000 arrays of 10000-string-arrays.
 func testSet(seed int) [][]string {
 	gen := &generator{

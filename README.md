@@ -1,4 +1,4 @@
-## Handysort [![Build Status](https://drone.io/github.com/Xlab/handysort/status.png)](https://drone.io/github.com/Xlab/handysort/latest)
+## Handysort [![Build Status](https://drone.io/github.com/xlab/handysort/status.png)](https://drone.io/github.com/xlab/handysort/latest) [![GoDoc](https://godoc.org/github.com/xlab/handysort?status.svg)](https://godoc.org/github.com/xlab/handysort)
 
 This is a Go package implementing a correct comparison function
 to compare alphanumeric strings with respect to their integer parts.
@@ -28,7 +28,7 @@ However, this is about 5x-8x times slower than the default sort version.
 package main
 
 import (
-	"github.com/Xlab/handysort"
+	"github.com/xlab/handysort"
 	"sort"
 )
 
