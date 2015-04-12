@@ -71,16 +71,7 @@ func StringLess(s1, s2 string) (less bool) {
 		if (!d1 || !d2) && r1 > 0 && r2 > 0 {
 			if n1NonEmpty && n2NonEmpty {
 				// compare digits in accumulators
-				less, equal := compareByDigits(n1, n2)
-				if equal && less {
-					return true
-				} else if !equal {
-					return less
-				}
-
-				// if equal but not less, empty accumulators and continue
-				n1, n2 = n1[0:0], n2[0:0]
-				n1NonEmpty, n2NonEmpty = false, false
+				return compareByDigits(n1, n2)
 			}
 
 			// detect if non-digit rune from former or latter
@@ -92,8 +83,7 @@ func StringLess(s1, s2 string) (less bool) {
 
 	if n1NonEmpty || n2NonEmpty {
 		// reached both strings ends, compare numeric accumulators
-		less, _ = compareByDigits(n1, n2)
-		return
+		return compareByDigits(n1, n2)
 	}
 
 	// last hope
@@ -101,7 +91,7 @@ func StringLess(s1, s2 string) (less bool) {
 }
 
 // Compare two numeric fields by their digits
-func compareByDigits(n1, n2 []rune) (less, equal bool) {
+func compareByDigits(n1, n2 []rune) (less bool) {
 	offset := len(n2) - len(n1)
 	n1n2 := offset < 0 // len(n1) > len(n2)
 	if n1n2 {
@@ -127,17 +117,17 @@ func compareByDigits(n1, n2 []rune) (less, equal bool) {
 		r2 := n2[i]
 		if r1 != r2 {
 			if n1n2 {
-				return r2 < r1, false // actually r1 < r2
+				return r2 < r1 // actually r1 < r2
 			}
-			return r1 < r2, false
+			return r1 < r2
 		}
 	}
 
 	// numeric value equals, compare by length
 	if n1n2 {
 		// n1 was > n2
-		return false, true
+		return false
 	}
 	// eval a comparison only if n1 known to be <= n2
-	return len(n1) < len(n2), true
+	return len(n1) < len(n2)
 }
