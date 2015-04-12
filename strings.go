@@ -83,7 +83,10 @@ func StringLess(s1, s2 string) (less bool) {
 
 	if n1NonEmpty || n2NonEmpty {
 		// reached both strings ends, compare numeric accumulators
-		return compareByDigits(n1, n2)
+		if less = compareByDigits(n1, n2); less {
+			return less
+		}
+		return len(s1) < len(s2)
 	}
 
 	// last hope

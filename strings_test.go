@@ -51,6 +51,9 @@ func TestStringLess(t *testing.T) {
 		{"a01b001", "a001b01", true},
 		{"a001b01", "a01b001", false},
 		//
+		{"a1", "a1x", true},
+		{"a1x", "a1", false},
+		//
 		{"082", "83", true},
 	}
 
