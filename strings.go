@@ -23,9 +23,7 @@ than a simple sort, so use it wisely.
 */
 package handysort
 
-import (
-	"unicode/utf8"
-)
+import "unicode/utf8"
 
 // Strings implements the sort interface, sorts an array
 // of the alphanumeric strings in decreasing order.
@@ -38,6 +36,7 @@ func (a Strings) Less(i, j int) bool { return StringLess(a[i], a[j]) }
 // StringLess compares two alphanumeric strings correctly.
 func StringLess(s1, s2 string) (less bool) {
 	n1, n2 := make([]rune, 0, 20), make([]rune, 0, 20)
+	var n1NonEmpty, n2NonEmpty bool
 
 	for i, j := 0, 0; i < len(s1) || j < len(s2); {
 		var r1, r2 rune
@@ -52,6 +51,7 @@ func StringLess(s1, s2 string) (less bool) {
 			// if digit, accumulate
 			if d1 = ('0' <= r1 && r1 <= '9'); d1 {
 				n1 = append(n1, r1)
+				n1NonEmpty = true
 			}
 		}
 
@@ -63,20 +63,24 @@ func StringLess(s1, s2 string) (less bool) {
 			// if digit, accumulate
 			if d2 = ('0' <= r2 && r2 <= '9'); d2 {
 				n2 = append(n2, r2)
+				n2NonEmpty = true
 			}
 		}
 
 		// if have rune and other non-digit rune
 		if (!d1 || !d2) && r1 > 0 && r2 > 0 {
-			if len(n1) > 0 && len(n2) > 0 {
+			if n1NonEmpty && n2NonEmpty {
 				// compare digits in accumulators
 				less, equal := compareByDigits(n1, n2)
-				if !equal {
+				if equal && less {
+					return true
+				} else if !equal {
 					return less
 				}
 
-				// if equal, empty accumulators and continue
+				// if equal but not less, empty accumulators and continue
 				n1, n2 = n1[0:0], n2[0:0]
+				n1NonEmpty, n2NonEmpty = false, false
 			}
 
 			// detect if non-digit rune from former or latter
@@ -86,11 +90,10 @@ func StringLess(s1, s2 string) (less bool) {
 		}
 	}
 
-	// reached both strings ends, compare numeric accumulators
-	less, equal := compareByDigits(n1, n2)
-
-	if !equal {
-		return less
+	if n1NonEmpty || n2NonEmpty {
+		// reached both strings ends, compare numeric accumulators
+		less, _ = compareByDigits(n1, n2)
+		return
 	}
 
 	// last hope
@@ -102,12 +105,13 @@ func compareByDigits(n1, n2 []rune) (less, equal bool) {
 	offset := len(n2) - len(n1)
 	n1n2 := offset < 0 // len(n1) > len(n2)
 	if n1n2 {
-		// if n1 longer, inverse with n2
+		// if n1 longer, swap with n2
 		offset = -offset
 		n1, n2 = n2, n1
 	}
 
 	var j int
+	// len(n1) always be <= len(n2)
 	for i := range n2 {
 		var r1 rune
 		if offset == 0 {
@@ -129,9 +133,11 @@ func compareByDigits(n1, n2 []rune) (less, equal bool) {
 		}
 	}
 
-	// use overall length then
+	// numeric value equals, compare by length
 	if n1n2 {
-		return true, false
+		// n1 was > n2
+		return false, true
 	}
-	return !n1n2, len(n1) == len(n2)
+	// eval a comparison only if n1 known to be <= n2
+	return len(n1) < len(n2), true
 }

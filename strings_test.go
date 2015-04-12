@@ -28,6 +28,7 @@ func TestStringLess(t *testing.T) {
 		s1, s2 string
 		less   bool
 	}{
+		{"00", "0", false}, // from skarademir/naturalsort
 		{"aa", "ab", true},
 		{"ab", "abc", true},
 		{"abc", "ad", true},
