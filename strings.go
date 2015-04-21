@@ -86,12 +86,8 @@ func StringLess(s1, s2 string) (less bool) {
 			} else if !equal {
 				return less
 			}
-		} else if !d1 {
-			// abc > 123
-			return false
 		} else {
-			// 123 < abc
-			return true
+			return r1 < r2
 		}
 		d1, d2 = false, false
 		b1, b2 = nil, nil
