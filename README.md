@@ -1,3 +1,5 @@
+:exclamation: WARNING: 13x slower than https://github.com/fvbommel/util/tree/master/sortorder
+
 ## Handysort [![Build Status](https://drone.io/github.com/xlab/handysort/status.png)](https://drone.io/github.com/xlab/handysort/latest) [![GoDoc](https://godoc.org/github.com/xlab/handysort?status.svg)](https://godoc.org/github.com/xlab/handysort)
 
 This is a Go package implementing a correct comparison function
