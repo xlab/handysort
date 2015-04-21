@@ -1,4 +1,4 @@
-// Copyright 2014 Maxim Kouprianov. All rights reserved.
+// Copyright 2015 Maxim Kupriianov. All rights reserved.
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
@@ -35,84 +35,97 @@ func (a Strings) Less(i, j int) bool { return StringLess(a[i], a[j]) }
 
 // StringLess compares two alphanumeric strings correctly.
 func StringLess(s1, s2 string) (less bool) {
-	n1, n2 := make([]rune, 0, 20), make([]rune, 0, 20)
-	var n1NonEmpty, n2NonEmpty bool
+	var b1, b2 []rune
+	var r1, r2 rune
+	var e1, e2 bool
+	var d1, d2 bool
+	var i, j int
 
-	for i, j := 0, 0; i < len(s1) || j < len(s2); {
-		var r1, r2 rune
-		var e1, e2 bool
-		var d1, d2 bool
-
+	for !e1 || !e2 {
 		// read rune from former string available
 		r1, i, e1 = advanceRune(i, s1)
 		if !e1 {
-			// if digit, accumulate
 			if d1 = ('0' <= r1 && r1 <= '9'); d1 {
-				n1 = append(n1, r1)
-				n1NonEmpty = true
+				// if digit, fill numeric buffer
+				b1, i, e1 = fillBuffer(r1, i, s1, true)
+			} else {
+				// symbolic otherwise
+				b1, i, e1 = fillBuffer(r1, i, s1, false)
 			}
 		}
 
 		// read rune from latter string if available
 		r2, j, e2 = advanceRune(j, s2)
 		if !e2 {
-			// if digit, accumulate
 			if d2 = ('0' <= r2 && r2 <= '9'); d2 {
-				n2 = append(n2, r2)
-				n2NonEmpty = true
+				// if digit, accumulate
+				b2, j, e2 = fillBuffer(r2, j, s2, true)
+			} else {
+				// symbolic otherwise
+				b2, j, e2 = fillBuffer(r2, j, s2, false)
 			}
 		}
 
-		// if have rune and other non-digit rune
-		if (!d1 || !d2) && r1 > 0 && r2 > 0 {
-			if n1NonEmpty && n2NonEmpty {
-				// compare digits in accumulators
-				less, greater, equal := compareByDigits(n1, n2)
-				if less {
-					return true
-				} else if greater {
-					return false
-				} else if !equal {
-					return less
-				}
-				// fetch next rune in strings that lack a digit rune
-				if d1 {
-					r1, i, e1 = advanceRune(i, s1)
-				}
-				if d2 {
-					r2, j, e2 = advanceRune(j, s2)
-				}
-				if r1 != r2 {
-					return r1 < r2
-				}
-				// equal runes after digit areas -> continue
-				n1, n2 = n1[0:0], n2[0:0]
-				n1NonEmpty, n2NonEmpty = false, false
+		if d1 && d2 {
+			// compare digits in buffers (both are numeric)
+			less, greater, equal := compareByDigits(b1, b2)
+			if less {
+				return true
+			} else if greater {
+				return false
+			} else if !equal {
+				return less
 			}
-
-			// just compare non-digit runes
-			if r1 != r2 {
-				return r1 < r2
+		} else if !d1 && !d2 {
+			// compare chars in buffers (both are symbolic)
+			less, greater, equal := compareByChars(b1, b2)
+			if less {
+				return true
+			} else if greater {
+				return false
+			} else if !equal {
+				return less
 			}
-		}
-	}
-
-	if n1NonEmpty || n2NonEmpty {
-		// reached both strings ends, compare numeric accumulators
-		less, greater, equal := compareByDigits(n1, n2)
-		if less {
-			return true
-		} else if greater {
+		} else if !d1 {
+			// abc > 123
 			return false
-		} else if !equal {
-			return less
+		} else {
+			// 123 < abc
+			return true
 		}
+		d1, d2 = false, false
+		b1, b2 = nil, nil
 	}
 
-	// last hope
 	return len(s1) < len(s2)
 }
 
+func fillBuffer(initial rune, ptr int, str string, numeric bool) (buf []rune, i int, end bool) {
+	buf = make([]rune, 0, len(str)-ptr+1)
+	buf = append(buf, initial)
+	i = ptr
+	var r rune
+	var e bool
+	var d bool
+	for {
+		// read rune from former string available
+		r, i, e = advanceRune(i, str)
+		if e {
+			return
+		}
+		// if digit & numeric field, accumulate
+		if d = ('0' <= r && r <= '9'); d && numeric {
+			buf = append(buf, r)
+		} else if !d && !numeric {
+			buf = append(buf, r)
+		} else {
+			i-- // undo 1-step advance
+			return
+		}
+	}
+}
+
+// Advances offset in str, returns current rune if not end.
 func advanceRune(ptr int, str string) (r rune, i int, end bool) {
 	if ptr < len(str) {
 		var w int
@@ -121,6 +134,42 @@ func advanceRune(ptr int, str string) (r rune, i int, end bool) {
 		return
 	}
 	return 0, ptr, true
+}
+
+func compareByChars(c1, c2 []rune) (less, greater, equal bool) {
+	c1c2 := len(c1) < len(c2)
+	var minLen int
+	// get the minimum length
+	if c1c2 {
+		minLen = len(c1)
+	} else {
+		minLen = len(c2)
+	}
+	for i := range make([]struct{}, minLen) {
+		equal = c1[i] == c2[i]
+		if !equal {
+			if c1[i] < c2[i] {
+				less = true
+				greater = false
+				return
+			}
+			less = false
+			greater = true
+			return
+		}
+	}
+	equal = len(c1) == len(c2)
+	if !equal {
+		if c1c2 {
+			less = true
+			greater = false
+			return
+		}
+		less = false
+		greater = true
+		return
+	}
+	return false, false, true
 }
 
 // Compares two numeric fields by their digits, if equal then
@@ -151,9 +200,9 @@ func compareByDigits(n1, n2 []rune) (less, greater, equal bool) {
 		r2 := n2[i]
 		if r1 != r2 {
 			if n1n2 {
-				return r2 < r1, r1 > r2, false // actually r1 < r2
+				return r2 < r1, r2 > r1, false // actually r1 < r2
 			}
-			return r1 < r2, r2 > r1, false
+			return r1 < r2, r1 > r2, false
 		}
 	}
 
@@ -163,5 +212,5 @@ func compareByDigits(n1, n2 []rune) (less, greater, equal bool) {
 		return false, true, true
 	}
 	// eval a comparison only if n1 known to be <= n2
-	return len(n1) < len(n2), len(n2) > len(n1), true
+	return len(n1) < len(n2), len(n1) > len(n2), true
 }

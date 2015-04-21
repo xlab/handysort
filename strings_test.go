@@ -28,6 +28,7 @@ func TestStringLess(t *testing.T) {
 		s1, s2 string
 		less   bool
 	}{
+		{"2", "3", true},
 		{"0", "00", true},
 		{"00", "0", false},
 		{"aa", "ab", true},
@@ -49,8 +50,11 @@ func TestStringLess(t *testing.T) {
 		{"a01b001", "a001b01", true},
 		{"a001b01", "a01b001", false},
 		{"a1", "a1x", true},
+		{"a1x", "a1", false},
 		{"1ax", "1b", true},
 		{"1b", "1ax", false},
+		{"1a10", "2", true},
+		{"2", "1a10", false},
 		//
 		{"082", "83", true},
 	}
